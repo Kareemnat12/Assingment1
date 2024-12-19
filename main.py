@@ -25,7 +25,19 @@ def group_and_aggregate_data(df: pd.DataFrame, group_by_column: str, agg_func):
 #it prefers using string
 ## ***************************************************************
 
-
+# ***************************************************************
+#               Remove Sparse Columns
+# ***************************************************************
+def remove_sparse_columns(df: pd.DataFrame, threshold: int):
+        always_keep = ['city_name', 'ballot_code']
+        numeric_df = df.select_dtypes(include='number')
+        filtered_columns = [col for col in numeric_df.columns
+                                if numeric_df[col].sum() >= threshold]
+        filtered_columns = always_keep + filtered_columns
+        filtered_columns = list(set(filtered_columns))
+        ordered_columns = [col for col in df.columns
+                            if col in filtered_columns]
+        return df[ordered_columns]
 
 
 # this for test fuctions
@@ -37,3 +49,8 @@ def group_and_aggregate_data(df: pd.DataFrame, group_by_column: str, agg_func):
 # print("#####################this is the group ###################")
 # af=group_and_aggregate_data(df,"city_name",'mean')
 # print(af.head())
+#
+## print("#####################this is the remove sparse ###################")
+#filtered_df = remove_sparse_columns(df,1000)
+# print("Filtered DataFrame:")
+# print(filtered_df)
