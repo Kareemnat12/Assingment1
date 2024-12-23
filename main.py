@@ -39,6 +39,32 @@ def remove_sparse_columns(df: pd.DataFrame, threshold: int):
                             if col in filtered_columns]
         return df[ordered_columns]
 
+# ***************************************************************
+
+
+# ***************************************************************
+#               remove sparse columns 
+# ***************************************************************
+def remove_sparse_columns(df: pd.DataFrame, threshold: int):
+        # Always include these columns
+        always_keep = ['city_name', 'ballot_code']
+
+        # Add numeric columns based on the sum threshold
+        numeric_df = df.select_dtypes(include='number')
+        filtered_columns = [col for col in numeric_df.columns
+                                if numeric_df[col].sum() >= threshold]
+
+        # Combine the always-keep columns with the filtered numeric columns
+        filtered_columns = always_keep + filtered_columns
+
+        # Remove duplicates by converting to a set and back to a list
+        filtered_columns = list(set(filtered_columns))
+
+        # Preserve the original order of the columns
+        ordered_columns = [col for col in df.columns
+                            if col in filtered_columns]
+
+        return df[ordered_columns]
 
 # this for test fuctions
 # print("################test functions ###########")
