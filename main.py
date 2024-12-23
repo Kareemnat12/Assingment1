@@ -43,28 +43,24 @@ def remove_sparse_columns(df: pd.DataFrame, threshold: int):
 
 
 # ***************************************************************
-#               remove sparse columns 
-# ***************************************************************
-def remove_sparse_columns(df: pd.DataFrame, threshold: int):
-        # Always include these columns
-        always_keep = ['city_name', 'ballot_code']
+#           dimensionality reduction
+# **************************************************************
 
-        # Add numeric columns based on the sum threshold
-        numeric_df = df.select_dtypes(include='number')
-        filtered_columns = [col for col in numeric_df.columns
-                                if numeric_df[col].sum() >= threshold]
+def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns: list[str]) -> pd.DataFrame:
 
-        # Combine the always-keep columns with the filtered numeric columns
-        filtered_columns = always_keep + filtered_columns
-
-        # Remove duplicates by converting to a set and back to a list
-        filtered_columns = list(set(filtered_columns))
-
-        # Preserve the original order of the columns
-        ordered_columns = [col for col in df.columns
-                            if col in filtered_columns]
-
-        return df[ordered_columns]
+    metadata = df[meta_columns]
+    data = df.drop(columns=meta_columns)
+    centered_data = data - data.mean()
+    covariance_matrix = np.cov(centered_data, rowvar=False)
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+    sorted_indices = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[sorted_indices]
+    eigenvectors = eigenvectors[:, sorted_indices]
+    principal_components = eigenvectors[:, :num_components]
+    reduced_data = np.dot(centered_data, principal_components)
+    reduced_df = pd.DataFrame(reduced_data, columns=[f"PC{i + 1}" for i in range(num_components)])
+    result = pd.concat([metadata.reset_index(drop=True), reduced_df], axis=1)
+    return result
 
 # this for test fuctions
 # print("################test functions ###########")
