@@ -10,10 +10,17 @@ from fontTools.misc.cython import returns
 # ***************************************************************
 
 def load_data(filepath: str):
-    return pd.read_excel(filepath)
-    #I have question here, should i make it input output by user?
+    try:
+        return pd.read_excel(filepath)
+    except Exception as e:
+        print(f"Error loading file: {e}")
+        return None
+        #I have question here, should i make it input output by user?
     #or just get the name of the file by a string variable ?
+    #should include
 # ***************************************************************
+
+
 
 
 # ***************************************************************
@@ -24,6 +31,8 @@ def group_and_aggregate_data(df: pd.DataFrame, group_by_column: str, agg_func):
 #im not sure if the agg_func is a string or not because it gives me a warning if it was for instanc np.mean
 #it prefers using string
 ## ***************************************************************
+
+
 
 # ***************************************************************
 #               Remove Sparse Columns
@@ -39,8 +48,38 @@ def remove_sparse_columns(df: pd.DataFrame, threshold: int):
                             if col in filtered_columns]
         return df[ordered_columns]
 
+## ***************************************************************
 
-# this for test fuctions
+def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns: list[str]):
+
+    metadata = df[meta_columns]
+    data = df.drop(columns=meta_columns)
+    centered_data = data - data.mean()
+    covariance_matrix = np.cov(centered_data, rowvar=False)
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+    sorted_indices = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[sorted_indices]
+    eigenvectors = eigenvectors[:, sorted_indices]
+    principal_components = eigenvectors[:, :num_components]
+    reduced_data = np.dot(centered_data, principal_components)
+    reduced_df = pd.DataFrame(reduced_data, columns=[f"PC{i + 1}" for i in range(num_components)])
+    result = pd.concat([metadata.reset_index(drop=True), reduced_df], axis=1)
+    return result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#this for test fuctions
 # print("################test functions ###########")
 # print("#####################this is the load ###################")
 # df = load_data("knesset_25.xlsx")
@@ -50,7 +89,12 @@ def remove_sparse_columns(df: pd.DataFrame, threshold: int):
 # af=group_and_aggregate_data(df,"city_name",'mean')
 # print(af.head())
 #
-## print("#####################this is the remove sparse ###################")
-#filtered_df = remove_sparse_columns(df,1000)
+# # print("#####################this is the remove sparse ###################")
+# filtered_df = remove_sparse_columns(df,1000)
 # print("Filtered DataFrame:")
 # print(filtered_df)
+#
+# print("testtttt")
+#
+# ff =dimensionality_reduction(filtered_df,2,['city_name','ballot_code'])
+# print(ff)
