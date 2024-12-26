@@ -57,6 +57,10 @@ def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns
     eigenvalues = eigenvalues[sorted_indices]
     eigenvectors = eigenvectors[:, sorted_indices]
     principal_components = eigenvectors[:, :num_components]
+    #to make the custom function match the pca function
+    for i in range(principal_components.shape[1]):
+        if np.sum(principal_components[:, i]) < 0:
+            principal_components[:, i] *= -1
     reduced_data = np.dot(centered_data, principal_components)
     reduced_df = pd.DataFrame(reduced_data, columns=[f"PC{i + 1}" for i in range(num_components)])
     result = pd.concat([metadata.reset_index(drop=True), reduced_df], axis=1)
