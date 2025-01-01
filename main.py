@@ -54,17 +54,31 @@ def group_and_aggregate_data(df: pd.DataFrame, group_by_column: str, agg_func) -
 
 
 # ********************** Remove Sparse Columns********************************
-def remove_sparse_columns(df: pd.DataFrame, threshold: int):
-        always_keep = ['city_name', 'ballot_code'] # ok i think here there is no need to put ballot code
-        numeric_df = df.select_dtypes(include='number')
-        filtered_columns = [col for col in numeric_df.columns
-                                if numeric_df[col].sum() >= threshold] # i think and dont know but there is way much easier chat gpt:     filtered_columns = numeric_df.columns[numeric_df.sum() >= threshold].tolist()---- see below
+# def remove_sparse_columns(df: pd.DataFrame, threshold: int):
+#         always_keep = ['city_name', 'ballot_code'] # ok i think here there is no need to put ballot code
+#         numeric_df = df.select_dtypes(include='number')
+#         filtered_columns = [col for col in numeric_df.columns
+#                                 if numeric_df[col].sum() >= threshold] # i think and dont know but there is way much easier chat gpt:     filtered_columns = numeric_df.columns[numeric_df.sum() >= threshold].tolist()---- see below
+#
+#         filtered_columns = always_keep + filtered_columns
+#         filtered_columns = list(set(filtered_columns))    # --------------------
+#         ordered_columns = [col for col in df.columns
+#                             if col in filtered_columns]
+#         return df[ordered_columns]
 
-        filtered_columns = always_keep + filtered_columns
-        filtered_columns = list(set(filtered_columns))
-        ordered_columns = [col for col in df.columns
-                            if col in filtered_columns]
-        return df[ordered_columns]
+def remove_sparse_columns(df: pd.DataFrame, threshold: int) -> pd.DataFrame:
+    extracted_df = df[["city_name"]].copy()
+    if "ballot_code" in df.columns:
+        extracted_df = df[["city_name", "ballot_code"]].copy()
+    df = df.drop(columns=extracted_df.columns)
+
+    column_sums = df.sum()
+    filtered_columns = column_sums[column_sums >= threshold].index
+    df = df[filtered_columns]
+
+    final_df = pd.concat([extracted_df, df], axis=1)
+    return final_df
+
 
 
 
