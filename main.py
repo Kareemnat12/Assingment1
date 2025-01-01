@@ -111,3 +111,61 @@ def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns
 # print(filtered_df)
 
 
+# ***************************************************************
+#          Analyze and Visualize Function
+# ***************************************************************
+def analyze_and_visualize(filepath: str):
+    """
+    Perform the full analysis and visualization process.
+    """
+    # Load the data
+    df = load_data(filepath)
+    print("Loaded Columns:", df.columns.tolist())  # Debugging output
+
+    # Remove sparse columns
+    df.columns = df.columns.str.strip()  # Ensure column names are clean
+    filtered_df = remove_sparse_columns(df, threshold=1000)
+    print("Filtered Columns:", filtered_df.columns.tolist())  # Debugging output
+
+    # Dimensionality reduction for cities
+    meta_columns = ["city_name"]
+    for col in meta_columns:
+        if col not in filtered_df.columns:
+            raise KeyError(f"Column '{col}' not found in the DataFrame!")
+    reduced_cities_df = dimensionality_reduction(filtered_df, num_components=2, meta_columns=meta_columns)
+    print("Reduced Cities DataFrame:", reduced_cities_df.head())
+
+    # Visualize city data
+    fig_cities = px.scatter(reduced_cities_df, x="PC1", y="PC2", hover_data=meta_columns, title="Dimensionality Reduction for Cities")
+    fig_cities.show()
+
+    # Transpose for parties
+    transposed_df = filtered_df.set_index("city_name").transpose()
+    transposed_df.reset_index(inplace=True)
+    transposed_df.rename(columns={"index": "party_name"}, inplace=True)
+    print("Transposed DataFrame:", transposed_df.head())
+
+    # Remove sparse rows for parties
+    filtered_parties_df = remove_sparse_columns(transposed_df, threshold=1000)
+    reduced_parties_df = dimensionality_reduction(filtered_parties_df, num_components=2, meta_columns=["party_name"])
+    print("Reduced Parties DataFrame:", reduced_parties_df.head())
+
+    # Visualize party data
+    fig_parties = px.scatter(reduced_parties_df, x="PC1", y="PC2", hover_data=["party_name"], title="Dimensionality Reduction for Parties")
+    fig_parties.show()
+
+
+
+# ***************************************************************
+#                          Main Execution
+# ***************************************************************
+def main():
+    # Prompt the user for a file path or use a default file
+
+
+    analyze_and_visualize('knesset_25.xlsx')
+
+
+# Ensure the script runs only when executed directly
+if __name__ == "__main__":
+    main()
