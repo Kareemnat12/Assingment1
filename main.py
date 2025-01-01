@@ -110,42 +110,4 @@ def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns
 # print("Filtered DataFrame:")
 # print(filtered_df)
 
-'''
-i have question about the second function
-how to pass the aggregate function ??
-it gives me warning if i pass it as function and tells me to pass it as string 
-sot what should i do?
-
-## ok about the 3rd function should we take the result form the group aggregate fucntion?
-if the answer is yes so we should not include the ballot code inside the array in the 3rd function 
-
-
-
-## ithink and based on chat gpt 
-{
-def remove_sparse_columns_with_grouping(df: pd.DataFrame, group_by_column: str, agg_func, threshold: int):
-    always_keep = ['city_name']  # Column to always keep
-    
-    # Aggregate the data by the group-by column
-    grouped_df = group_and_aggregate_data(df, group_by_column, agg_func)
-    
-    # Filter numeric columns by sum and threshold
-    numeric_df = grouped_df.select_dtypes(include='number')
-    filtered_columns = numeric_df.columns[numeric_df.sum() >= threshold].tolist()
-    
-    # Combine the always-keep columns with filtered columns
-    filtered_columns = list(set(always_keep + filtered_columns))
-    
-    # Ensure the correct column order
-    ordered_columns = [col for col in grouped_df.columns if col in filtered_columns]
-    
-    return grouped_df[ordered_columns]
-
-
-we can use stuff like that for our woriking 
-be aware that gpt added new argument 
-i dont know if we should keep it in group by city name 
-}
-'''
-
 
