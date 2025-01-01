@@ -1,45 +1,74 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+'''is it allowed to import os ? '''
+import os
 import plotly.express as px
 from fontTools.misc.cython import returns
+import streamlit as st
 
 
-# ***************************************************************
-#                     Load Data Function
-# ***************************************************************
+
+# ************************ Load Data Function ********************************
 
 def load_data(filepath: str):
-    return pd.read_excel(filepath)
-    #I have question here, should i make it input output by user?
-    #or just get the name of the file by a string variable ?
-# ***************************************************************
+    # To Handle if the file is not found
+    try:
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"The file {filepath} does not exist.")
+
+        # Check the extention if it excel or csv
+        if filepath.endswith('.csv'):
+            data = pd.read_csv(filepath)
+        elif filepath.endswith(('.xls', '.xlsx')):
+            data = pd.read_excel(filepath)
+        else:
+            raise ValueError("Unsupported file format. Please provide a CSV or Excel file.")
+
+        # Optional: Check if the DataFrame is empty
+        if data.empty:
+            raise ValueError("The loaded file is empty.")
+
+        return data
+    #print the error that occured in file reading or loading
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+    except ValueError as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 
-# ***************************************************************
-#               Group and Aggregate Data
-# ***************************************************************
-def group_and_aggregate_data(df: pd.DataFrame, group_by_column: str, agg_func):
-    return df.groupby(group_by_column).agg(agg_func)
-#im not sure if the agg_func is a string or not because it gives me a warning if it was for instanc np.mean
-#it prefers using string
-## ***************************************************************
 
-# ***************************************************************
-#               Remove Sparse Columns
-# ***************************************************************
+
+
+
+# ********************* Group and Aggregate Data *****************************
+def group_and_aggregate_data(df: pd.DataFrame, group_by_column: str, agg_func) -> pd.DataFrame:
+    # Performing the functionality
+    result = df.drop(columns='ballot_code').groupby(group_by_column).agg(agg_func)
+    return result
+## we should ask about the agg fun wheter ists texst or function
+
+
+
+
+# ********************** Remove Sparse Columns********************************
 def remove_sparse_columns(df: pd.DataFrame, threshold: int):
-        always_keep = ['city_name', 'ballot_code']
+        always_keep = ['city_name', 'ballot_code'] # ok i think here there is no need to put ballot code
         numeric_df = df.select_dtypes(include='number')
         filtered_columns = [col for col in numeric_df.columns
-                                if numeric_df[col].sum() >= threshold]
+                                if numeric_df[col].sum() >= threshold] # i think and dont know but there is way much easier chat gpt:     filtered_columns = numeric_df.columns[numeric_df.sum() >= threshold].tolist()---- see below
+
         filtered_columns = always_keep + filtered_columns
         filtered_columns = list(set(filtered_columns))
         ordered_columns = [col for col in df.columns
                             if col in filtered_columns]
         return df[ordered_columns]
 
-# ***************************************************************
+
+
+
 
 
 # ***************************************************************
@@ -80,3 +109,5 @@ def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns
 #filtered_df = remove_sparse_columns(df,1000)
 # print("Filtered DataFrame:")
 # print(filtered_df)
+
+
