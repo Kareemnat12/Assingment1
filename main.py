@@ -54,19 +54,35 @@ def group_and_aggregate_data(df: pd.DataFrame, group_by_column: str, agg_func) -
 
 
 # ********************** Remove Sparse Columns********************************
+# def remove_sparse_columns(df: pd.DataFrame, threshold: int):
+#         #always_keep = ['city_name', 'ballot_code'] # ok i think here there is no need to put ballot code
+#         numeric_df = df.select_dtypes(include='number')
+#         filtered_columns = [col for col in numeric_df.columns
+#                                 if numeric_df[col].sum() >= threshold] # i think and dont know but there is way much easier chat gpt:     filtered_columns = numeric_df.columns[numeric_df.sum() >= threshold].tolist()---- see below
+#
+#        # filtered_columns = always_keep + filtered_columns
+#         filtered_columns = list(set(filtered_columns))
+#         ordered_columns = [col for col in df.columns
+#                             if col in filtered_columns]
+#         return df[ordered_columns]
+
 def remove_sparse_columns(df: pd.DataFrame, threshold: int):
-        always_keep = ['city_name', 'ballot_code'] # ok i think here there is no need to put ballot code
-        numeric_df = df.select_dtypes(include='number')
-        filtered_columns = [col for col in numeric_df.columns
-                                if numeric_df[col].sum() >= threshold] # i think and dont know but there is way much easier chat gpt:     filtered_columns = numeric_df.columns[numeric_df.sum() >= threshold].tolist()---- see below
+    # always_keep = ['city_name']  # Column to always keep
 
-        filtered_columns = always_keep + filtered_columns
-        filtered_columns = list(set(filtered_columns))
-        ordered_columns = [col for col in df.columns
-                            if col in filtered_columns]
-        return df[ordered_columns]
+    # Aggregate the data by the group-by column
+    grouped_df = group_and_aggregate_data(df, 'city_name', 'sum')
 
+    # Filter numeric columns by sum and threshold
+    numeric_df = grouped_df.select_dtypes(include='number')
+    filtered_columns = numeric_df.columns[numeric_df.sum(axis=0) >= threshold].tolist()
 
+    # Combine the always-keep columns with filtered columns
+    # filtered_columns = list(set(always_keep + filtered_columns))
+
+    # Ensure the correct column order
+    ordered_columns = list(set(grouped_df.columns).intersection(filtered_columns))
+
+    return grouped_df[ordered_columns]
 
 
 
