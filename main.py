@@ -46,7 +46,7 @@ def load_data(filepath: str):
 # ********************* Group and Aggregate Data *****************************
 def group_and_aggregate_data(df: pd.DataFrame, group_by_column: str, agg_func) -> pd.DataFrame:
     # Performing the functionality
-    result = df.drop(columns='ballot_code').groupby(group_by_column).agg(agg_func)
+    result = df.drop(columns='ballot_code').groupby(group_by_column).agg(agg_func).reset_index()
     return result
 ## we should ask about the agg fun wheter ists texst or function
 
@@ -87,25 +87,66 @@ def remove_sparse_columns(df: pd.DataFrame, threshold: int) -> pd.DataFrame:
 #           dimensionality reduction
 # **************************************************************
 
-def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns: list[str]) -> pd.DataFrame:
+# def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns: list[str]) -> pd.DataFrame:
+#
+#     metadata = df[meta_columns]
+#     data = df.drop(columns=meta_columns)
+#     centered_data = data - data.mean()
+#     covariance_matrix = np.cov(centered_data, rowvar=False)
+#     eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+#     sorted_indices = np.argsort(eigenvalues)[::-1]
+#     eigenvalues = eigenvalues[sorted_indices]
+#     eigenvectors = eigenvectors[:, sorted_indices]
+#     principal_components = eigenvectors[:, :num_components]
+#     #to make the custom function match the pca function
+#     for i in range(principal_components.shape[1]):
+#         if np.sum(principal_components[:, i]) < 0:
+#             principal_components[:, i] *= -1
+#     reduced_data = np.dot(centered_data, principal_components)
+#     reduced_df = pd.DataFrame(reduced_data, columns=[f"PC{i + 1}" for i in range(num_components)])
+#     result = pd.concat([metadata.reset_index(drop=True), reduced_df], axis=1)
+#     return result
 
+
+def dimensionality_reduction(df: pd.DataFrame, num_components: int, meta_columns: list[str]) -> pd.DataFrame:
+    # Extract metadata and data (drop the meta columns)
     metadata = df[meta_columns]
     data = df.drop(columns=meta_columns)
+
+    # Standardize the data manually (center and scale)
     centered_data = data - data.mean()
-    covariance_matrix = np.cov(centered_data, rowvar=False)
+    scaled_data = centered_data / data.std()
+
+    # Compute the covariance matrix
+    covariance_matrix = np.cov(scaled_data, rowvar=False)
+
+    # Eigen decomposition: eigenvalues and eigenvectors
     eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
+
+    # Sort the eigenvalues and eigenvectors in descending order
     sorted_indices = np.argsort(eigenvalues)[::-1]
     eigenvalues = eigenvalues[sorted_indices]
     eigenvectors = eigenvectors[:, sorted_indices]
+
+    # Get the top 'num_components' principal components
     principal_components = eigenvectors[:, :num_components]
-    #to make the custom function match the pca function
+
+    # Flip signs if necessary to match sklearn behavior
     for i in range(principal_components.shape[1]):
         if np.sum(principal_components[:, i]) < 0:
             principal_components[:, i] *= -1
-    reduced_data = np.dot(centered_data, principal_components)
+
+    # Project the data onto the principal components
+    reduced_data = np.dot(scaled_data, principal_components)
+
+    # Create a DataFrame for the reduced data (principal components)
     reduced_df = pd.DataFrame(reduced_data, columns=[f"PC{i + 1}" for i in range(num_components)])
+
+    # Concatenate the metadata with the reduced DataFrame
     result = pd.concat([metadata.reset_index(drop=True), reduced_df], axis=1)
+
     return result
+
 
 # this for test fuctions
 # print("################test functions ###########")
